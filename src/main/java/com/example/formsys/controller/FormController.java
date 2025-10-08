@@ -2,43 +2,40 @@ package com.example.formsys.controller;
 
 import com.example.formsys.model.Form;
 import com.example.formsys.repository.FormRepository;
+import com.example.formsys.service.FormService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/forms")
 public class FormController {
 
-    private final FormRepository formRepository;
+    private final FormService formService;
 
-    public FormController(FormRepository formRepository)
+    public FormController(FormService formService)
     {
-        this.formRepository = formRepository;
+        this.formService = formService;
     }
-    @PostMapping
-    public ResponseEntity<Form> create(@RequestBody Form form)
-    {
-        // Eingabe prüfen (Validierung). prüfen, ob das Feld 'title' leer ist.
-        // Wenn kein Titel angegeben wurde, wird eine Fehlermeldung zurückgesendet.
-     if(form.getTitle() == null || form.getTitle().isBlank()){
-         // HTTP 400 = Bad Request (ungültige Anfrage)
-        return ResponseEntity.badRequest().build();};
-        // Das Repository kümmert sich um das Speichern (INSERT-Befehl in der H2-Datenbank).
-     Form saved = formRepository.save(form);
-        // HTTP-Status 201 Created (Ressource erfolgreich erstellt)
-        // Im Body das gespeicherte Formular als JSON (inkl. automatisch vergebener ID)
-     return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @GetMapping
+    public ResponseEntity<List<Form>> getAllForms(){
+        //Alle Datensätze aus der Datenbank laden
+        List<Form> forms = formService.findAll();
+        System.out.println(" Es wurden " + forms.size() + " Formulare gefunden");
+
+        //wenn keine Formulare existieren -> leere Liste zurückgeben (Status 200)
+        return ResponseEntity.ok(forms);
 
     }
     @GetMapping("/{id}")
     public ResponseEntity<Form> get(@PathVariable Long id) {
 
         // Formular mit der gegebenen ID aus der Datenbank holen
-        Optional<Form> optionalForm = formRepository.findById(id);
+        Optional<Form> optionalForm = formService.findById(id);
 
         // Prüfen, ob ein Formular gefunden wurde
         if (optionalForm.isPresent()) {
@@ -50,38 +47,36 @@ public class FormController {
             return ResponseEntity.notFound().build();
         }
     }
-    @GetMapping
-    public ResponseEntity<List<Form>> getAllForms(){
-        //Alle Datensätze aus der Datenbank laden
-        List<Form> forms = formRepository.findAll();
-        System.out.println(" Es wurden " + forms.size() + " Formulare gefunden");
-
-        //wenn keine Formulare existieren -> leere Liste zurückgeben (Status 200)
-        return ResponseEntity.ok(forms);
+    @PostMapping
+    public ResponseEntity<Form> create(@RequestBody Form form)
+    {
+        // Eingabe prüfen (Validierung). prüfen, ob das Feld 'title' leer ist.
+        // Wenn kein Titel angegeben wurde, wird eine Fehlermeldung zurückgesendet.
+     if(form.getTitle() == null || form.getTitle().isBlank()) {
+         // HTTP 400 = Bad Request (ungültige Anfrage)
+         return ResponseEntity.badRequest().build();
+         //return ResponseEntity.badRequest().body(Map.of("error", "Titel darf nicht leer sein"));
+     }
+        // Das Repository kümmert sich um das Speichern (INSERT-Befehl in der H2-Datenbank).
+     Form saved = formService.create(form);
+        // HTTP-Status 201 Created (Ressource erfolgreich erstellt)
+        // Im Body das gespeicherte Formular als JSON (inkl. automatisch vergebener ID)
+     return ResponseEntity.status(HttpStatus.CREATED).body(saved);
 
     }
     @PutMapping("/{id}")
+    public ResponseEntity<Form> updateForm(@PathVariable Long id, @RequestBody Form updateForm) {
+        // Formular aktualisieren
+        Optional<Form> updated = formService.update(id, updateForm);
 
-    public ResponseEntity<Form> updateForm(@PathVariable Long id, @RequestBody Form updateForm){
-        // prüfen, ob das Formular exsistiert
-        Optional<Form> existing = formRepository.findById(id);
-
-        if(existing.isEmpty()){
-            // wenn nicht gefunden -> 404 zurückgeben
+        if (updated.isPresent()){
+            // wenn erfolgreich aktualisiert -> HTTP 200 + aktualisiertes Formular zurückgeben
+            return ResponseEntity.ok(updated.get());
+        }else {
+            // wenn kein Formular mit diesem #id gefunden -> HTTP 404 not Found
             return ResponseEntity.notFound().build();
         }
-        // das alte Formular holen
-        Form form = existing.get();
 
-        //Felder überschreiben
-        form.setTitle(updateForm.getTitle());
-        form.setDescription(updateForm.getDescription());
-        form.setSchemaJson(updateForm.getSchemaJson());
-
-        //Speichern
-        Form saved = formRepository.save(form);
-        // Antwort mit aktualisiertem Objekt zurückgeben
-        return ResponseEntity.ok(saved);
     }
     /*public ResponseEntity<Form> updateForm(@PathVariable Long id, @RequestBody Form updateForm) {
         Optional<Form> existing = formRepository.findById(id);
@@ -114,14 +109,13 @@ public class FormController {
     }*/
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteForm(@PathVariable Long id){
-        // prüfen, ob der Datensatz exestiert
-        if(!formRepository.existsById(id)){
+        // Service-Methode gibt true = gelöscht, false = nicht gefunden zurück
+        boolean deleted = formService.delete(id);
+
+        if(!deleted){
             // Falls nicht gefunden -> 404 Not Found
             return ResponseEntity.notFound().build();
         }
-
-        // Löschen
-        formRepository.deleteById(id);
         // kein Body zurückgeben, nur Status 204 No Content
         return ResponseEntity.noContent().build();
     }
