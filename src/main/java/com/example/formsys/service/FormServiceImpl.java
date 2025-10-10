@@ -64,6 +64,8 @@ public class FormServiceImpl implements FormService{
         if(updateForm.getSchemaJson() != null)
         { existing.setSchemaJson(updateForm.getSchemaJson());}
 
+        existing.setUpdateAt(java.time.LocalDateTime.now());
+
         //in der Datenbank speichern
         Form saved = formRepository.save(existing);
         //aktualisiertes Objekt zurückgeben

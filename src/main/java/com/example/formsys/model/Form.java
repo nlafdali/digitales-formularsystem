@@ -17,7 +17,10 @@ public class Form {
     private String description;
     @Lob
     private String schemaJson;
+    @Column(name = "CREAT_AT", updatable = false)
     private LocalDateTime creatAt;
+    @Column(name = "UPDATE_AT")
+    private LocalDateTime updateAt;
 
     public Form(){
         this.creatAt = LocalDateTime.now();
@@ -38,4 +41,21 @@ public class Form {
     public LocalDateTime getCreatAt(){return creatAt;}
     public void setCreatAt(LocalDateTime creatAt){this.creatAt = creatAt;}
 
+    public LocalDateTime getUpdateAt() {
+        return updateAt;
+    }
+
+    public void setUpdateAt(LocalDateTime updateAt) {
+        this.updateAt = updateAt;
+    }
+    @PrePersist
+    protected void onCreate(){
+        LocalDateTime now = LocalDateTime.now();
+        this.creatAt = now;
+        this.updateAt = now;
+    }
+    @PreUpdate
+    protected void onUpdate(){
+        this.updateAt= LocalDateTime.now();
+    }
 }

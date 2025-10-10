@@ -1,8 +1,10 @@
 package com.example.formsys.controller;
 
+import com.example.formsys.dto.FormDto;
 import com.example.formsys.model.Form;
 import com.example.formsys.repository.FormRepository;
 import com.example.formsys.service.FormService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,8 +50,26 @@ public class FormController {
         }
     }
     @PostMapping
-    public ResponseEntity<Form> create(@RequestBody Form form)
+    public ResponseEntity<?> create(@Valid @RequestBody FormDto formDto)
     {
+        try {
+            //Dto in Entity umwandeln
+            Form form = new Form();
+
+            form.setTitle(formDto.getTitle());
+            form.setDescription(formDto.getDescription());
+            form.setSchemaJson(formDto.getSchemaJson());
+
+            Form saved = formService.create(form);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+
+
+
+        /*
         // Eingabe prüfen (Validierung). prüfen, ob das Feld 'title' leer ist.
         // Wenn kein Titel angegeben wurde, wird eine Fehlermeldung zurückgesendet.
      if(form.getTitle() == null || form.getTitle().isBlank()) {
@@ -62,9 +82,32 @@ public class FormController {
         // HTTP-Status 201 Created (Ressource erfolgreich erstellt)
         // Im Body das gespeicherte Formular als JSON (inkl. automatisch vergebener ID)
      return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-
+*/
     }
     @PutMapping("/{id}")
+    public ResponseEntity<?> updateForm(@PathVariable Long id, @Valid @RequestBody FormDto formDto){
+        // Mapping DTo -> Entity (nur Felder, die updated werden)
+        //neues Form-Objekt aus dem DTO erstellen
+        Form update = new Form();
+        update.setTitle(formDto.getTitle());
+        update.setDescription(formDto.getDescription());
+        update.setSchemaJson(formDto.getSchemaJson());
+        //Service aufrufen -> versucht zu aktualisiertem Formular
+        Optional<Form> updated = formService.update(id, update);
+
+        //wenn vorhanden <> 200 ok mit aktualisierem Formular
+        //wenn nicht vorhanden -> 404 Not Found
+        if(updated.isPresent()){
+            // Wenn vorhanden -> 200 OK mit dem aktualisierten Formular
+            return ResponseEntity.ok(updated.get());
+        }else{
+            // Wenn nicht gefunden -> 404 Not Found
+            return ResponseEntity.notFound().build();
+        }
+
+
+    }
+    /*
     public ResponseEntity<Form> updateForm(@PathVariable Long id, @RequestBody Form updateForm) {
         // Formular aktualisieren
         Optional<Form> updated = formService.update(id, updateForm);
@@ -77,7 +120,7 @@ public class FormController {
             return ResponseEntity.notFound().build();
         }
 
-    }
+    }*/
     /*public ResponseEntity<Form> updateForm(@PathVariable Long id, @RequestBody Form updateForm) {
         Optional<Form> existing = formRepository.findById(id);
         if (existing.isEmpty()) {
