@@ -1,0 +1,34 @@
+@startuml
+title FormSys - Architekturübersicht
+
+package "Frontend" {
+  [Postman / HTML Client]
+}
+
+package "Backend (Spring Boot)" {
+  [FormController] --> [FormService]
+  [FormService] --> [FormRepository]
+}
+
+package "Datenbank" {
+  [H2 / Flyway]
+}
+
+[Postman / HTML Client] --> [FormController] : REST API (JSON)
+[FormRepository] --> [H2 / Flyway] : CRUD-Operationen (JPA)
+
+note right of [FormService]
+  - Enthält Geschäftslogik
+  - Validiert Daten
+  - Steuert DB-Zugriffe
+end note
+
+note right of [FormController]
+  - REST-Endpunkte:
+    - GET /api/forms
+    - POST /api/forms
+    - PUT /api/forms/{id}
+    - DELETE /api/forms/{id}
+end note
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+title Sequenzdiagramm – Formular speichern (POST /api/forms)
+
+actor "Benutzer" as User
+participant "FormController" as C
+participant "FormService" as S
+participant "FormRepository" as R
+database "H2-Datenbank" as DB
+
+User -> C : POST /api/forms (JSON)
+C -> S : create(form)
+S -> R : existsByTitle(title)?
+R --> S : false
+S -> R : save(form)
+R --> S : gespeichertes Form
+S --> C : ResponseEntity<Form>
+C --> User : HTTP 201 Created + JSON
+
+@enduml
