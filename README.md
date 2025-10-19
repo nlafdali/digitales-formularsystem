@@ -15,3 +15,7 @@ Das Projekt nutzt *Spring Boot*, *Spring Data JPA*, *H2-Datenbank* und *JUnit 5 
 - *Persistenz* mit JPA und H2 In-Memory-Datenbank
 - *Flyway-Migrationen* für DB-Versionierung
 - *Unit-Tests* (Mockito) und **Integrationstests** (MockMvc)
+
+- ## Sequenzdiagramm
+
+![Sequenzdiagramm](src/main/resources/static/Sequenzdiagramm___Formularsystem.png)
